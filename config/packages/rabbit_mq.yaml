@@ -13,13 +13,33 @@ old_sound_rabbit_mq:
       heartbeat: 0
       use_socket: true
   producers:
+    # базовый продюсер
     send_email:
       connection:       default
       exchange_options: { name: 'notification.v1.send_email', type: direct }
+
+    # продюсер с отложенной отправкой
+    delayed_send_email:
+      connection: default
+      exchange_options:
+        name: 'notification.v1.send_email_delayed_30000'
+        type: direct
+      queue_options:
+        name: 'notification.v1.send_email_delayed_30000'
+        arguments:
+          x-message-ttl: [ 'I', 30000 ] # 30sec
+          # после смерти переложить в основную очередь
+          x-dead-letter-exchange: [ 'S', 'notification.v1.send_email' ]
 
   consumers:
     send_email:
       connection:       default
       exchange_options: { name: 'notification.v1.send_email', type: direct }
       queue_options:    { name: 'notification.v1.send_email' }
-      callback:         app.consumer.mail_sender
+      callback: app.consumer.mail_sender
+
+    delayed_send_email:
+      connection: default
+      exchange_options: { name: 'notification.v1.send_email', type: direct }
+      queue_options: { name: 'notification.v1.send_email' }
+      callback: app.consumer.delayed_mail_sender

@@ -22,9 +22,20 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    # Base
     app.consumer.mail_sender:
         class: App\Consumer\MailSenderConsumer
 
-    App\Command\TestConsumerCommand:
+    App\Command\BaseConsumerCommand:
+        arguments:
+            $container: '@service_container'
+
+    # delayed
+    app.consumer.delayed_mail_sender:
+        class: App\Consumer\DelayedMailSenderConsumer
+        arguments: [ '@old_sound_rabbit_mq.delayed_send_email_producer' ]
+
+    App\Command\DelayedConsumerCommand:
         arguments:
             $container: '@service_container'
